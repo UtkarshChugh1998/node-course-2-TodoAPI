@@ -5,10 +5,18 @@ const expect = require('expect');
 
 // Testing life cycle method which runs before every single
 // test function.
+const todos = [{
+	text: 'First Test Todo',
+},{
+	text: 'Second Test Todo'
+}];
+
 beforeEach((done)=>{
 	// Will move on to testing the test case once we call done.
 	// Todo.remove({}), will remove all the existing Todos.
-	Todo.deleteMany({}).then(()=> done());
+	Todo.deleteMany({}).then(()=> {
+		return Todo.insertMany(todos);
+	}).then(()=> done());
 });
 
 // Testing the /todos POST route using mocha
@@ -38,7 +46,7 @@ describe('POST /todos',()=>{
 		// test may pass.
 		// Todo.find() similar to Mongodb native find()
 		// it returns all the todos. 
-		Todo.find().then((todos)=>{
+		Todo.find({text}).then((todos)=>{
 			expect(todos.length).toBe(1);
 			expect(todos[0].text).toBe(text);
 			done();
@@ -62,7 +70,7 @@ describe('POST /todos',()=>{
 			return done(err);
 		}
 		Todo.find().then((results)=>{
-			expect(results.length).toBe(0);
+			expect(results.length).toBe(2);
 			done();
 		}).catch((e)=>{
 			done(e);
@@ -70,4 +78,19 @@ describe('POST /todos',()=>{
 	})
 
 })	
+})
+
+
+
+// ****************************
+describe('GET /todos',()=>{
+	it('should get all todos',(done)=>{
+		request(app)
+		.get('/todos')
+		.expect(200)
+		.expect((res)=>{
+			expect(res.body.todos.length).toBe(2);
+		})
+		.end(done);
+	});
 })
