@@ -1,11 +1,14 @@
 var express = require('express');
-var bodyParser = require('body-parser');
+const bodyParser = require('body-parser');
 
-var {mongoose} = require('./db/mongoose.js');
-var {User} = require('./models/user');
-var {Todo} = require('./models/todo');
-
+const {mongoose} = require('./db/mongoose.js');
+const {User} = require('./models/user');
+const {Todo} = require('./models/todo');
+const {ObjectID} = require('mongodb');
 var app = express();
+var port = process.env.PORT || 3000;
+// Content passed along with HTTP request in body property
+// is parsed to JSOn so that it can be read by the server.
 app.use(bodyParser.json());
 
 // Creating new Todo
@@ -42,11 +45,33 @@ app.get('/todos',(req, res)=>{
 	})
 })
 
+// GET /todos/:id
+app.get('/todos/:id',(req, res)=>{
+	// Check for valid ID
+	// If not valid stop function execution and 
+	// respond with 400 and send empty body.
+	// If valid send success.
+	var {id} = req.params;
+	if(!ObjectID.isValid(id))
+	{
+		return res.status(404).send();
+	}
+	// Our REST API should respond only in JSON format
+	Todo.findById(id).then((todo)=>{
+			if(!todo){
+				return res.status(404).send();
+			}
+			res.send({todo});
+		}).catch((e)=>{
+			res.send(400).send();
+		})	
+		
+})
 
 // Making our web server listen to some port for route requests
 // Then forward those requests to the app server to handle them
-app.listen(3000, ()=>{
-	console.log(' Web Server running on port 3000');
+app.listen(port, ()=>{
+	console.log(' Web Server running on port',port);
 })
 
 module.exports = {
